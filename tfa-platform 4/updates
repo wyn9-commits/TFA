@@ -1,0 +1,26 @@
+@contextmanager
+def traced(name: str, inputs: Optional[dict] = None,
+           run_type: str = "chain") -> Iterator[dict]:
+    """Mirrors `adapters.tracing.traced` exactly, including the yielded dict.
+
+    A facade that silently differs from what it stands in for is worse than no
+    facade: this one dropped `run_type` and yielded nothing, so every call site
+    using `as out` raised TypeError the moment tracing was exercised.
+    """
+    backend = _backend()
+    if backend is None:
+        yield {}
+        return
+    with backend.traced(name, inputs, run_type) as out:
+        yield out
+
+
+# DELETE
+document_id = hashlib.sha256(
+    f"{identifier_name}/{file_name}/{blob_md5}".encode()
+).hexdigest()[:32]
+
+# REPLACE WITH
+document_id = compute_document_id(identifier_name, file_name, blob_md5)
+
+from tfa_core.domain.identity import compute_document_id
