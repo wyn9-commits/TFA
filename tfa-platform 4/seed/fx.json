@@ -1,0 +1,6 @@
+[
+  { "currency": "ARS", "usd_per_unit": "0.00080000" },
+  { "currency": "COP", "usd_per_unit": "0.00024000" },
+  { "currency": "MXN", "usd_per_unit": "0.05500000" },
+  { "currency": "USD", "usd_per_unit": "1.00000000" }
+]

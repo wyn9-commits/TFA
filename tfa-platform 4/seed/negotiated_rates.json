@@ -1,0 +1,18 @@
+[
+  {
+    "hotel_name": "ECO BOX INT GROUP S.A.",
+    "country": "Argentina",
+    "city": "Añelo",
+    "nightly_rate_usd": "180.00",
+    "valid_from": "2025-01-01",
+    "valid_to": null
+  },
+  {
+    "hotel_name": "Hilton Buenos Aires",
+    "country": "Argentina",
+    "city": "Buenos Aires",
+    "nightly_rate_usd": "120.00",
+    "valid_from": "2025-01-01",
+    "valid_to": null
+  }
+]

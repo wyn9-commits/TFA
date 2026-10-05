@@ -1,0 +1,10 @@
+# Everything needed to run the tests and the eval harness.
+# The root requirements.txt is the RUNTIME set; this adds tooling.
+#
+# Without this file a clean checkout cannot run `pytest`, which is how 78
+# tests end up never being run.
+-r requirements.txt
+
+pytest==8.3.4
+pytest-cov==6.0.0
+ruff==0.8.4

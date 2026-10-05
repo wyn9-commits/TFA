@@ -1,0 +1,24 @@
+{
+  "document_type": "air_ticket_invoice",
+  "hotel_name": "WINGS GLOBAL TRAVEL S A S",
+  "country": "Colombia",
+  "supplier_tax_id": "901887383-0",
+  "customer_name": "HALLIBURTON LATIN AMERICA S R L SUCURSAL COLOMBIA",
+  "customer_tax_id": "860051812",
+  "invoice_number": "WGT000032",
+  "folio_date": "2025-08-01",
+  "guest_name": "JHONNY ALEJANDRO GUTIERREZ",
+  "travel_route": "BOG/EJA",
+  "currency": "COP",
+  "total_amount": "384122.00",
+  "total_amount_from_words": "384122.00",
+  "nightly_charges": [],
+  "ancillary_charges": [
+    {"amount": "260000.00", "category": "airfare"},
+    {"amount": "49400.00", "category": "tax"},
+    {"amount": "22600.00", "category": "airport_tax"},
+    {"amount": "43800.00", "category": "admin_fee"},
+    {"amount": "8322.00", "category": "tax"}
+  ],
+  "expect_needs_review": false
+}

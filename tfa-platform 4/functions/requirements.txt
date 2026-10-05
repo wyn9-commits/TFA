@@ -1,0 +1,18 @@
+# The Functions host installs ONLY this file. It must contain every runtime
+# dependency the worker imports — the root requirements.txt also carries API,
+# eval and test packages that would bloat the deployment package.
+azure-functions==1.21.3
+
+pydantic==2.11.5
+pydantic-settings==2.9.1
+httpx==0.28.1
+
+azure-identity==1.23.0
+azure-storage-blob==12.25.1
+azure-storage-queue==12.12.0
+azure-cosmos==4.9.0
+azure-ai-documentintelligence==1.0.2
+
+PyMuPDF==1.26.0
+pyodbc==5.2.0
+openpyxl==3.1.5

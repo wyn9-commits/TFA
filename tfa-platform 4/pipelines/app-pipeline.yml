@@ -1,0 +1,71 @@
+# Application track: tests on every change; deploys the Function App on main.
+trigger:
+  branches: { include: [main] }
+  paths:
+    include: [src/*, functions/*, tests/*, requirements.txt]
+
+parameters:
+  - name: azureServiceConnection
+    type: string
+    default: 'D-AZ-HDS-DS-DEV-01'
+  - name: functionAppName
+    type: string
+    default: 'func-tfa-dev-southcentralus'
+  - name: environment
+    type: string
+    default: 'dev'
+    values: [dev, test, prod]
+
+stages:
+  - stage: Test
+    jobs:
+      - job: UnitTests
+        pool: { vmImage: ubuntu-latest }
+        steps:
+          - task: UsePythonVersion@0
+            inputs: { versionSpec: '3.11' }
+          - script: |
+              python -m pip install -r requirements.txt pytest
+              PYTHONPATH=src:. python -m pytest tests/ -q --junitxml=test-results.xml
+            displayName: 'pytest (36 tests)'
+          - task: PublishTestResults@2
+            condition: always()
+            inputs: { testResultsFiles: 'test-results.xml' }
+
+  - stage: Package
+    dependsOn: Test
+    jobs:
+      - job: Build
+        pool: { vmImage: ubuntu-latest }
+        steps:
+          - script: |
+              mkdir -p $(Build.ArtifactStagingDirectory)/app
+              cp functions/function_app.py functions/host.json $(Build.ArtifactStagingDirectory)/app/
+              cp -r src/tfa_core $(Build.ArtifactStagingDirectory)/app/tfa_core
+              cp requirements.txt $(Build.ArtifactStagingDirectory)/app/
+              cd $(Build.ArtifactStagingDirectory)/app && zip -r ../functionapp.zip .
+            displayName: 'Assemble deployment package (remote Oryx build)'
+          - publish: $(Build.ArtifactStagingDirectory)/functionapp.zip
+            artifact: functionapp
+
+  - stage: Deploy
+    dependsOn: Package
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployApp
+        environment: tfa-${{ parameters.environment }}
+        pool: { vmImage: ubuntu-latest }
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: functionapp
+                - task: AzureFunctionApp@2
+                  displayName: 'Deploy to Flex Consumption'
+                  inputs:
+                    azureSubscription: ${{ parameters.azureServiceConnection }}
+                    appType: functionAppLinux
+                    appName: ${{ parameters.functionAppName }}
+                    package: $(Pipeline.Workspace)/functionapp/functionapp.zip
+                    deploymentMethod: runFromPackage

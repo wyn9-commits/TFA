@@ -1,0 +1,67 @@
+# Infrastructure track: validates on PR, what-if + deploy on main.
+trigger:
+  branches: { include: [main] }
+  paths: { include: [infra/*] }
+
+parameters:
+  - name: azureServiceConnection
+    type: string
+    default: 'D-AZ-HDS-DS-DEV-01'
+  - name: resourceGroup
+    type: string
+    default: 'asg-tfa-dev-scus-rg'
+  - name: environment
+    type: string
+    default: 'dev'
+    values: [dev, test, prod]
+
+stages:
+  - stage: Validate
+    jobs:
+      - job: Lint
+        pool: { vmImage: ubuntu-latest }
+        steps:
+          - task: AzureCLI@2
+            displayName: 'Bicep build + lint'
+            inputs:
+              azureSubscription: ${{ parameters.azureServiceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az bicep build --file infra/main.bicep
+          - task: AzureCLI@2
+            displayName: 'What-if'
+            inputs:
+              azureSubscription: ${{ parameters.azureServiceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az deployment group what-if \
+                  --resource-group ${{ parameters.resourceGroup }} \
+                  --template-file infra/main.bicep \
+                  --parameters infra/main.${{ parameters.environment }}.bicepparam
+
+  - stage: Deploy
+    dependsOn: Validate
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployInfra
+        environment: tfa-${{ parameters.environment }}   # ADO approval gate lives here
+        pool: { vmImage: ubuntu-latest }
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  displayName: 'Deploy Bicep'
+                  inputs:
+                    azureSubscription: ${{ parameters.azureServiceConnection }}
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      az deployment group create \
+                        --resource-group ${{ parameters.resourceGroup }} \
+                        --template-file infra/main.bicep \
+                        --parameters infra/main.${{ parameters.environment }}.bicepparam \
+                        --name tfa-$(Build.BuildId)

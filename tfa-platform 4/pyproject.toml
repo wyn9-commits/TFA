@@ -1,0 +1,12 @@
+[project]
+name = "tfa-platform"
+version = "2.0.0"
+description = "Travel Folio Analysis — document intelligence platform (rebuild)"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
