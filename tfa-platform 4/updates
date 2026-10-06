@@ -24,3 +24,39 @@ document_id = hashlib.sha256(
 document_id = compute_document_id(identifier_name, file_name, blob_md5)
 
 from tfa_core.domain.identity import compute_document_id
+
+
+def test_all_status_writes_use_the_same_document_id():
+    """In-flight and failed states were keyed on a blob ETag while the terminal
+    write used document_id, so GET /status 404'd for exactly the documents an
+    operator needed to see.
+
+    Parsed rather than grepped: a line-based check reports a false failure the
+    moment a call is wrapped across lines, which is a formatting choice and not
+    a defect.
+    """
+    import ast
+
+    src = (ROOT / "src/tfa_core/pipeline/ingest.py").read_text()
+    tree = ast.parse(src)
+
+    calls = [
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "mark"
+    ]
+    assert calls, "no status writes found"
+
+    offenders = []
+    for call in calls:
+        keyword = next((k for k in call.keywords if k.arg == "document_id"), None)
+        if keyword is None:
+            offenders.append(f"line {call.lineno}: no document_id argument")
+        elif not (isinstance(keyword.value, ast.Name)
+                  and keyword.value.id == "document_id"):
+            offenders.append(
+                f"line {call.lineno}: document_id={ast.unparse(keyword.value)}")
+
+    assert not offenders, "status writes not keyed on document_id:\n  " + \
+        "\n  ".join(offenders)
