@@ -94,3 +94,5 @@ $t = ($f | Get-Content -Raw) -join "`n"
 "--- KEY VAULT SECRET NAMES ---"
 [regex]::Matches($t,'azurerm_key_vault_secret"\s+"([^"]+)"') | % { $_.Groups[1].Value } | Sort -Unique
 
+
+$t=(Get-ChildItem -Recurse -Include *.tf,*.tfvars|Get-Content -Raw) -join "`n"; "COSMOS: "+[bool]($t -match 'azurerm_cosmosdb')+" | DOCINTEL: "+[bool]($t -match 'FormRecognizer')+" | QUEUE: "+[bool]($t -match 'azurerm_storage_queue')+" | APPSVC-AUTH: "+[bool]($t -match 'auth_settings')+" | SQL-ENTRA-ADMIN: "+[bool]($t -match 'azuread_administrator'); "KINDS: "+(([regex]::Matches($t,'kind\s*=\s*"([A-Za-z]+)"')|%{$_.Groups[1].Value}|Sort -Unique) -join ", "); "MODELS: "+(([regex]::Matches($t,'model_name\s*=\s*"([^"]+)"')|%{$_.Groups[1].Value}|Sort -Unique) -join ", "); "RESOURCES: "+(([regex]::Matches($t,'resource\s+"azurerm_([a-z_]+)"')|%{$_.Groups[1].Value}|Sort -Unique) -join ", ")
