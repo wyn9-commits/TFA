@@ -68,3 +68,29 @@ Get-ChildItem -Recurse -Include *.tf,*.tfvars |
   Select-String -Pattern 'resource "azurerm_','azurerm_cognitive','cosmosdb','search_service','storage_queue','function_app','app_settings','auth_settings','allowed_emails','azuread_administrator','azuread_authentication_only','administrator_login','key_vault_secret','model_name','model_version','deployment','sku_name','kind\s*=' |
   ForEach-Object { "{0}:{1}: {2}" -f $_.Path.Replace((Get-Location).Path,''), $_.LineNumber, $_.Line.Trim() } |
   Out-File tfa-infra-scan.txt
+
+
+
+
+
+
+$f = Get-ChildItem -Recurse -Include *.tf,*.tfvars
+$t = ($f | Get-Content -Raw) -join "`n"
+"--- RESOURCE TYPES ---"
+[regex]::Matches($t,'resource\s+"(azurerm_[a-z_]+)"') | % { $_.Groups[1].Value } | Sort -Unique
+"--- AI ACCOUNT KINDS ---"
+[regex]::Matches($t,'kind\s*=\s*"([A-Za-z]+)"') | % { $_.Groups[1].Value } | Sort -Unique
+"--- MODELS ---"
+[regex]::Matches($t,'model_name\s*=\s*"([^"]+)"') | % { $_.Groups[1].Value } | Sort -Unique
+"--- YES/NO ---"
+"Cosmos DB:          " + [bool]($t -match 'azurerm_cosmosdb')
+"Document Intel:     " + [bool]($t -match 'FormRecognizer')
+"Storage queue:      " + [bool]($t -match 'azurerm_storage_queue')
+"App Service auth:   " + [bool]($t -match 'auth_settings')
+"SQL Entra admin:    " + [bool]($t -match 'azuread_administrator')
+"SQL Entra-only:     " + [bool]($t -match 'azuread_authentication_only\s*=\s*true')
+"--- APP SETTING NAMES ---"
+[regex]::Matches($t,'"([A-Z][A-Z0-9_]{3,})"\s*=') | % { $_.Groups[1].Value } | Sort -Unique
+"--- KEY VAULT SECRET NAMES ---"
+[regex]::Matches($t,'azurerm_key_vault_secret"\s+"([^"]+)"') | % { $_.Groups[1].Value } | Sort -Unique
+
